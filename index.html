@@ -110,13 +110,22 @@
         // 定義所有的選項資料
         const config = [
             {
-                id: 'outfit',
-                title: '1. 穿著打扮 (風格)',
-                icon: '👘',
+                id: 'layout',
+                title: '1. 輸出排列方式',
+                icon: '📊',
                 type: 'single',
                 options: [
+                    { label: '單張' }, { label: '以 2x2 排列' }, { label: '以 3x3 排列' }, { label: '以 4x4 排列' }
+                ]
+            },
+            {
+                id: 'outfit',
+                title: '2. 穿著打扮 (可複選，製作多圖排列)',
+                icon: '👘',
+                type: 'multiple', // 修改為複選
+                options: [
                     // 女性與唯美華麗風格
-                    { label: '公主' }, { label: '仙女裝' }, { label: '白紗禮服' }, 
+                    { label: '公主' }, { label: '仙女裝' }, { label: '精靈' }, { label: '白紗禮服' }, 
                     { label: '華麗晚禮服' }, { label: '貴婦洋裝' }, { label: '碎花洋裝' }, { label: '氣質套裝' },
                     // 傳統與民族服飾
                     { label: '旗袍' }, { label: '古裝' }, { label: '韓服' }, { label: '和服' }, 
@@ -126,12 +135,12 @@
                     { label: '功夫裝' }, { label: '紳士西裝' }, { label: '帥氣軍裝' }, { label: '西部牛仔裝' }, 
                     // 休閒與特色風格
                     { label: '復古吊帶褲' }, { label: '夏威夷花襯衫' }, { label: '休閒運動服' }, 
-                    { label: '登山休閒裝' }, { label: '魔法師長袍' }, { label: '科技未來裝' }
+                    { label: '登山休閒裝' }, { label: '魔法師長袍' }, { label: '科技未來裝' }, { label: '復古迪斯可' }
                 ]
             },
             {
                 id: 'emotion',
-                title: '2. 表情心情',
+                title: '3. 表情心情',
                 icon: '😊',
                 type: 'single',
                 options: [
@@ -143,7 +152,7 @@
             },
             {
                 id: 'action',
-                title: '3. 正在做什麼 (可多選)',
+                title: '4. 正在做什麼 (可多選)',
                 icon: '👋',
                 type: 'multiple',
                 options: [
@@ -157,7 +166,7 @@
             },
             {
                 id: 'artStyle',
-                title: '4. 藝術畫風 (含最新流行)',
+                title: '5. 藝術畫風 (含最新流行)',
                 icon: '🎨',
                 type: 'single',
                 options: [
@@ -170,7 +179,7 @@
             },
             {
                 id: 'background',
-                title: '5. 背景選擇',
+                title: '6. 背景選擇',
                 icon: '🌅',
                 type: 'single',
                 options: [
@@ -184,11 +193,12 @@
 
         // 儲存學生的選擇
         const state = {
-            outfit: '',
+            layout: '',
+            outfit: [], // 改為陣列儲存複選
             emotion: '',
             action: [], // 陣列，支援多選
             artStyle: '',
-            background: '' // 新增背景狀態
+            background: ''
         };
 
         // 初始化介面
@@ -266,19 +276,30 @@
         // 組合並更新提示詞
         function updatePromptDisplay() {
             let promptParts = ["依照上傳圖片"];
-            let details = [];
-
-            // 如果有選打扮
-            if (state.outfit) {
-                details.push(`換上 [${state.outfit}] 的造型`);
+            
+            // 1. 排列方式 (若選擇了且不為「單張」，則加入提示)
+            if (state.layout && state.layout !== '單張') {
+                promptParts.push(`，${state.layout}`);
             }
 
-            // 如果有選表情
+            let details = [];
+
+            // 2. 穿著打扮 (複選)
+            if (state.outfit.length > 0) {
+                const outfitStr = state.outfit.map(o => `[${o}]`).join('');
+                if (state.outfit.length > 1) {
+                    details.push(`分別換上 ${outfitStr} 的造型`);
+                } else {
+                    details.push(`換上 ${outfitStr} 的造型`);
+                }
+            }
+
+            // 3. 表情
             if (state.emotion) {
                 details.push(`表情 [${state.emotion}]`);
             }
 
-            // 如果有選動作 (可能多個)
+            // 4. 動作 (複選)
             if (state.action.length > 0) {
                 const actionStr = state.action.map(a => `[${a}]`).join('');
                 details.push(`動作是 ${actionStr}`);
@@ -291,12 +312,12 @@
                 promptParts.push("，產生新的造型"); // 預設詞
             }
 
-            // 加上風格
+            // 5. 加上風格
             if (state.artStyle) {
                 promptParts.push(`，整體為 [${state.artStyle}] 畫風`);
             }
 
-            // 加上背景設定
+            // 6. 加上背景設定
             if (state.background) {
                 promptParts.push(`，背景為 [${state.background}]`);
             }
